@@ -1,0 +1,10 @@
+version: '3.9'
+
+services:
+  website:
+    restart: unless-stopped
+    image: labs:latest
+    container_name: DoSALabs
+    build: .
+    ports:
+      - 5556:80/tcp
