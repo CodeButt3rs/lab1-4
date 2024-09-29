@@ -11,7 +11,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR ~
 
-COPY webapp .
+COPY webapp ./webapp
 COPY requirements.txt .
 
 EXPOSE 80/tcp
@@ -22,6 +22,6 @@ RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt update
 RUN yes | apt install python3.12
 RUN yes | apt install python3-pip
-RUN pip install fastapi uvicorn
+RUN pip install fastapi uvicorn pydantic
 
-ENTRYPOINT uvicorn --bind=$WEB_APP_HOST:$WEB_APP_PORT web:app
+ENTRYPOINT uvicorn --host $WEB_APP_HOST --port $WEB_APP_PORT webapp.main:app
