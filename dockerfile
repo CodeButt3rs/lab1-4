@@ -4,8 +4,17 @@ LABEL maintainer="tekrimon4ever@yandex.ru"
 LABEL name="Labs"
 LABEL description="Лабы по предмету Разработка серверных приложений"
 
+# Web app
 ENV WEB_APP_HOST="0.0.0.0"
 ENV WEB_APP_PORT="80"
+# Redis
+ENV REDIS_HOST="0.0.0.0"
+ENV REDIS_PORT="5516"
+ENV REDIS_USER="vladl"
+ENV REDIS_PASS="Vlad03032006!"
+# PostgreSQL
+ENV POSTGRESQL_HOST="0.0.0.0"
+ENV POSTGRESQL_PORT="5526"
 
 ARG DEBIAN_FRONTEND=noninteractive
 

@@ -8,3 +8,17 @@ services:
     build: .
     ports:
       - 5556:80/tcp
+  redis-dos:
+    restart: unless-stopped
+    image: redis:7.4.0-alpine
+    container_name: DoSALabs-Redis
+    ports:
+      - 5516:5566/tcp
+  postgresql-dos:
+    restart: unless-stopped
+    image: bitnami/postgresql:16.4
+    container_name: DoSALabs-Redis
+    environment:
+      - POSTGRESQL_PORT_NUMBER=5432
+    ports:
+      - 5526:5432/tcp
