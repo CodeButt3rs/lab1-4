@@ -31,6 +31,6 @@ RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt update
 RUN yes | apt install python3.12
 RUN yes | apt install python3-pip
-RUN pip install fastapi uvicorn pydantic
+RUN pip install -r requirements.txt
 
-ENTRYPOINT uvicorn --host $WEB_APP_HOST --port $WEB_APP_PORT webapp.main:app
+ENTRYPOINT uvicorn --host $WEB_APP_HOST --port $WEB_APP_PORT webapp.__main__:app

@@ -1,6 +1,6 @@
 import fastapi
 from fastapi import Request, FastAPI, APIRouter
-from .models.models import *
+from ..models.models import *
 
 app = FastAPI()
 info_router = APIRouter(prefix='/info')

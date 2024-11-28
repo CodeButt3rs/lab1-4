@@ -12,13 +12,16 @@ services:
     restart: unless-stopped
     image: redis:7.4.0-alpine
     container_name: DoSALabs-Redis
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
     ports:
-      - 5516:5566/tcp
+      - 5516:6379/tcp
   postgresql-dos:
     restart: unless-stopped
-    image: bitnami/postgresql:16.4
-    container_name: DoSALabs-Redis
+    image: postgres:16.2-alpine3.19
+    container_name: DoSALabs-Postgres
     environment:
       - POSTGRESQL_PORT_NUMBER=5432
+      - POSTGRES_PASSWORD=vlald
     ports:
       - 5526:5432/tcp
