@@ -1,3 +1,4 @@
+uvicorn
 alembic
 annotated-types
 anyio
