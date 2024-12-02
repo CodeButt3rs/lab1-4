@@ -3,8 +3,8 @@ import redis
 import hashlib
 import random
 from uuid import UUID
-from .models import User, Base, RegisterUser
-from ..models.models import AuthUser
+from .models import User, Base, RegisterUser, Role, Permissions
+from ..models.models import AuthUser, RequestRole, UpdateRole
 from fastapi import exceptions
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -12,7 +12,7 @@ from sqlalchemy import select
 
 class Postgres:
     def __init__(self):
-        self.postgres_engine = sqlalchemy.engine.create_engine("postgresql+psycopg2://postgres:vlald@192.168.1.132:5526/postgres")
+        self.postgres_engine = sqlalchemy.engine.create_engine("postgresql+psycopg2://postgres:vlald@192.168.1.132:5526/development")
         self.session: Session = Session(self.postgres_engine)
         Base.metadata.create_all(bind=self.postgres_engine)
 
@@ -42,6 +42,33 @@ class Postgres:
         if not user:
             raise exceptions.HTTPException(status_code=401, detail='User login or password is incorrect')
         return user
+    
+    def get_roles(self) -> list[Role]:
+        return self.session.scalars(select(Role)).all()
+    
+    def get_role(self, id: UUID) -> Role:
+        return self.session.scalars(select(Role).where(Role.id == id)).one_or_none()
+    
+    def create_role(self, role: RequestRole, user: User) -> Role:
+        role_code = select(Role).where(Role.role_code == role.role_code)
+        if self.session.scalars(role_code).one_or_none():
+            raise exceptions.HTTPException(status_code=400, detail='Role with this code already exists')
+        created_role: Role = Role.make_role(role, user)
+        self.session.add(created_role)
+        self.session.commit()
+        self.session.refresh(created_role)
+        return created_role
+    
+    def update_role(self, id: UUID, updated_role: UpdateRole, user: User) -> Role:
+        role = self.session.scalars(select(Role).where(Role.id == id)).one_or_none()
+        if not role:
+            raise exceptions.HTTPException(status_code=400, detail='Role with this ID does not exist')
+        if self.session.scalars(select(Role).where(Role.role_code == updated_role.role_code)).one_or_none():
+            raise exceptions.HTTPException(status_code=400, detail='Role with that code already exists')
+        role.apply_changes(updated_role)
+        self.session.commit()
+        self.session.refresh(role)
+        return role
 
 
 class Redis:
@@ -106,5 +133,20 @@ class DatabaseManager:
 
     def insert_user(self) -> User:
         User.user_name
+
+    def get_all_roles(self) -> list[Role]:
+        return self.postgresql.get_roles()
+
+    def get_role_by_id(self, id: str) -> list[Role]:
+        return self.postgresql.get_role(id)
+    
+    def create_role(self, role: RequestRole, user_name: str) -> Role:
+        return self.postgresql.create_role(role, self.postgresql.get_user_by_username(user_name))
+    
+    def update_role(self, id: UUID, role: RequestRole, user_name: str) -> Role:
+        return self.postgresql.update_role(id, role, self.postgresql.get_user_by_username(user_name))
+    
+    def delete_role_hard(self, id: UUID, role: RequestRole, user_name: str) -> Role:
+        return self.postgresql.update_role(id, role, self.postgresql.get_user_by_username(user_name))
 
 database_mgr = DatabaseManager()

@@ -72,13 +72,7 @@ class RegisterUser(BaseModel):
         if not re.match(string=email, pattern=r"^\S+@\S+\.\S+$"):
             raise HTTPException(status_code=400, detail="Incorrect email")
         return email
-    
-    # @field_validator('birthday')
-    # @classmethod
-    # def user_birthday_validation(cls, birthday: str):
-    #     if not re.match(string=birthday.iso, pattern=r"^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$"):
-    #         raise HTTPException(status_code=400, detail=f"Incorrect birthday format. Should be YYYY-MM-DD, presented {birthday}")
-    #     return birthday
+
 
 class AuthUser(BaseModel):
     user_name: str
@@ -87,3 +81,11 @@ class AuthUser(BaseModel):
 class TokenUser(BaseModel):
     user_name: str
     token: str
+
+class RequestRole(BaseModel):
+    role_name: str
+    role_description: str
+    role_code: str
+
+class UpdateRole(RequestRole):
+    role_id: str
