@@ -87,5 +87,20 @@ class RequestRole(BaseModel):
     role_description: str
     role_code: str
 
-class UpdateRole(RequestRole):
+class UpdateRole(BaseModel):
     role_id: str
+    role_name: str | None = None
+    role_description: str | None = None
+    role_code: str | None = None
+
+class RequestPermission(BaseModel):
+    permission_name: str
+    permission_description: str
+    permission_code: str
+
+class UpdatePermission(BaseModel):
+    permission_id: str
+    permission_name: str | None = None
+    permission_description: str | None = None
+    permission_code: str | None = None
+    permission_roles: list[str] | None = None
