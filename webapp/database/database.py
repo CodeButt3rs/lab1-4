@@ -5,11 +5,14 @@ import random
 from uuid import UUID
 
 import sqlalchemy.orm
-from .models import User, Base, RegisterUser, Role, Permissions
+from functools import wraps
+from .models import User, Base, RegisterUser, Role, Permissions, ChangesHistory
 from ..models.models import AuthUser, RequestRole, UpdateRole, RequestPermission, UpdatePermission
 from fastapi import exceptions
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+# from ..utils.history import make_record as make_history
+from sqlalchemy.ext.serializer import dumps 
 
 
 class Postgres:
@@ -176,6 +179,11 @@ class Postgres:
         self.session.commit()
         self.session.refresh(role)
         return role
+    
+    def make_history_record(self, entity: Base, user: User, data: str):
+        self.session.commit(
+            ChangesHistory.make_record(entity, user, data)
+        )
         
 
 class Redis:
@@ -200,6 +208,24 @@ class Redis:
         # .replace("'", "")[1:]
         return str(self.get_token(user, refresh=True)[2:-1]) == token
 
+# def make_record(func, entity_type, entity_id: str):
+#         @wraps(func)
+#         def _impl(self, *args, **kwargs):
+#             entity_get = {
+#                 User: self.postgresql.get_user_by_id,
+#                 Permissions: self.get_permission_by_id,
+#                 Role: self.get_role_by_id
+#             }
+
+#             try: 
+#                 previous_data: Base = entity_get[entity_type](kwargs.get(entity_id))
+#                 user = self.get_user(kwargs.get('usern_name'))
+#                 jsoned_data = dumps(previous_data)
+#                 func(*args, **kwargs)
+#                 self.make_history_record(entity_type, user, jsoned_data)
+#             except Exception as e:
+#                 raise e
+#         return _impl
 
 class DatabaseManager:
     def __init__(self):
@@ -275,7 +301,8 @@ class DatabaseManager:
     def create_permission(self, role: RequestPermission, user_name: str) -> Role:
         return self.postgresql.create_premission(role, self.postgresql.get_user_by_username(user_name))
     
-    def update_permission(self, id: UUID, role: UpdatePermission) -> Role:
+    @make_record(entity_type=Permissions, entity_id='id')
+    def update_permission(self, id: UUID, role: UpdatePermission, user_name: str) -> Role:
         return self.postgresql.update_premission(id, role)
     
     def delete_permission_hard(self, id: UUID) -> Role:
@@ -302,5 +329,10 @@ class DatabaseManager:
     def reset_user_role(self, user_id: UUID):
         default_role = self.postgresql.session.scalars(select(Role).where(Role.role_code == 'DEFAULT_GUEST')).one_or_none()
         return self.postgresql.set_user_role(user_id, default_role.id)
+    
+    # HISTORY
+
+    def make_history_record(entity: Base, user: User):
+        pass
 
 database_mgr = DatabaseManager()

@@ -4,7 +4,7 @@ from uuid import UUID
 from ..models.models import *
 from ..utils.dependecies import auth_required, PermissionDependnecy
 from ..database.database import database_mgr
-
+from ..utils.history import make_history
 
 get_user_list = PermissionDependnecy('GET_USER_ALL')
 get_user_self = PermissionDependnecy('GET_USER_SELF')
@@ -69,8 +69,8 @@ def create_permission(request: Request, permission: RequestPermission, user: Ann
     return database_mgr.create_permission(permission, user.get("user_name"))
 
 @policy_router.put("/permission/{id}", dependencies=[Depends(edit_permission)])
-def update_permission(request: Request, id: str, permission: UpdatePermission):
-    return database_mgr.update_permission(id, permission)
+def update_permission(request: Request, id: str, permission: UpdatePermission, user: Annotated[dict, Depends(edit_permission)]):
+    return database_mgr.update_permission(id, permission, user['user_name'])
 
 @policy_router.delete("/permission/{id}", dependencies=[Depends(delete_permission)])
 def delete_permission_hard(request: Request, id: str):

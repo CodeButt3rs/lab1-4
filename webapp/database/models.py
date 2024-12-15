@@ -8,7 +8,7 @@ from datetime import date
 from ..models.models import RegisterUser, RequestRole, UpdateRole, RequestPermission, UpdatePermission
 from typing import List
 from datetime import datetime
-from sqlalchemy import text, select, Column, ForeignKey, String, Date, DateTime, Connection, UUID
+from sqlalchemy import text, select, Column, ForeignKey, String, Date, DateTime, Connection, UUID, Text
 import sqlalchemy
 import hashlib
 
@@ -32,7 +32,7 @@ class User(Base):
     user_password: Mapped[str] = mapped_column(String(256))
     user_email: Mapped[str] = mapped_column(String(256), unique=True)
     user_birthday: Mapped[date] = mapped_column(Date)
-    user_role: Mapped["_role"] = mapped_column(
+    user_role: Mapped["_role"] = mapped_column( # type: ignore
         ForeignKey("user_role.id"), 
         nullable=True, 
         default=select(text("id from user_role")).where(text("role_code = 'USER_DEFAULT'"))
@@ -145,6 +145,25 @@ class Permissions(Base):
         self.permission_deleted_at = None
         self._user_deleted_by = None
 
+
+class ChangesHistory(Base):
+    __tablename__ = "librarian_history"
+
+    id: Mapped[UUID] = mapped_column(UUID, unique=True, primary_key=True, default=uuid4)
+    entity_table: Mapped[String] = mapped_column(String)
+    entity_data: Mapped[Text] = mapped_column(Text)
+    created_at: Mapped[date] = mapped_column(Date, default=datetime.now)
+    created_by: Mapped["User"] = mapped_column(ForeignKey("user_account.id"))
+
+    _created_by: Mapped[List[User]] = relationship("User", foreign_keys=[created_by])
+
+    def make_record(entity: Base, user: User, data: str):
+        return ChangesHistory(
+            entity_table=entity.__table__,
+            entity_data=data,
+            _created_by=user
+        )
+    
 
 class UserToken(HashModel):
     user: str
